@@ -17,7 +17,7 @@ Description
  
 
 Our Api Doc
-* stock-service http://localhost:8080/swagger-ui.html
+* campaign-api http://localhost:8080/swagger-ui.html
 
 
 How to run
