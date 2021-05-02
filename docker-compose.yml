@@ -1,0 +1,75 @@
+version: '3.7'
+
+services:
+  catalog-api:
+    build:
+      context: catalog-api
+      dockerfile: Dockerfile
+    environment:
+      SPRING_MONGODB_HOST: mongodb
+      SPRING_MONGODB_PORT: 27017
+      SPRING_MONGODB_DATABASE: campaignmongo
+    ports:
+      - "8080:8080"
+    restart: always
+    depends_on:
+      - mongodb # Pass environment variables to the service
+    networks:
+      - catalog-network
+
+  catalog-importer:
+    build:
+      context: catalog-importer
+      dockerfile: Dockerfile
+    environment:
+       RABBITMQ_HOST: rabbitmq
+       RABBITMQ_PORT: 5672
+       RABBITMQ_USERNAME: guest
+       RABBITMQ_PASSWORD: guest
+       RABBITMQ_EXCHANGE: campaign_events
+       RABBITMQ_ROUTING_KEY: campaigns_create
+       RABBITMQ_QUEUE_NAME: campaigns_create_queue
+       SPRING_MONGODB_HOST: mongodb
+       SPRING_MONGODB_PORT: 27017
+       SPRING_MONGODB_DATABASE: campaignmongo
+    restart: always
+    depends_on:
+      - rabbitmq
+      - mongodb
+    networks:
+      - catalog-network
+
+  # Database Service (Mongodb)
+  mongodb:
+    image: mongo:latest
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+       SPRING_MONGODB_HOST: mongodb
+       SPRING_MONGODB_PORT: 27017
+       SPRING_MONGODB_DATABASE: campaignmongo
+    volumes:
+      - catalog-db-data:/data/db
+    networks:
+      - catalog-network
+
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    restart: "always"
+    environment:
+       RABBITMQ_USERNAME: guest
+       RABBITMQ_PASSWORD: guest
+       RABBITMQ_PORT: 5672
+       RABBITMQ_HOST: rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - catalog-network
+
+# Volumes
+volumes:
+  catalog-db-data:
+networks:
+  catalog-network:
